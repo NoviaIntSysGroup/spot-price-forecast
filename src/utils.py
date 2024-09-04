@@ -452,7 +452,7 @@ def calculate_metrics(y_test, y_pred):
         'root_mean_squared_error': rmse
     }
 
-def auto_regressive_prediction(X_train, y_train, X_test, y_test, model, horizon=24, refit=False, eval_train=False):
+def ts_prediction(X_train, y_train, X_test, y_test, model, horizon=24, refit=False, eval_train=False):
     """
     Predicts the target variable for the testing data using an autoregressive approach,
     retraining the model after each window using the true values from the previous window.
@@ -538,7 +538,7 @@ def train_and_test_model(X_train, X_test, y_train, y_test, model, horizon=24, re
     """
   
     # Make predictions, maintaining index so that we can plot it correctly
-    y_pred, coeff = auto_regressive_prediction(X_train, y_train, X_test, y_test, model, horizon, refit, eval_train)
+    y_pred, coeff = ts_prediction(X_train, y_train, X_test, y_test, model, horizon, refit, eval_train)
 
     # Calculate evaluation metrics
     if eval_train:
@@ -599,8 +599,9 @@ def plot_year_over_year_coefficients(coeffs, keyword=False, model_name=""):
     plt.xlabel('Coefficient Value')
     plt.title(f'{model_name} Coefficients for "{keyword}" Features')
     plt.xticks(rotation=90)  
-    # add legend
-    plt.legend([f'Year {year}' for year in coeffs.keys()], title='Year', bbox_to_anchor=(1.05, 1), loc='upper left')  
+    # add legend only if its a bar plot
+    if len(coeff) != 1:
+        plt.legend([f'Year {year}' for year in coeffs.keys()], title='Year', bbox_to_anchor=(1.05, 1), loc='upper left')  
     plt.show()
 
 def plot_metrics(metrics):
