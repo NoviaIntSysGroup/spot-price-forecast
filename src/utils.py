@@ -1,4 +1,5 @@
 import time
+import requests
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,9 +11,6 @@ import plotly.graph_objs as go
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, root_mean_squared_error
 from sklearn.linear_model import LinearRegression
-import requests
-import time
-
 class NaiveModel:
     """
     A naive model that predicts the last value in the dataset for all future values.
