@@ -1,7 +1,4 @@
----
-title: "Electricity Spot Price Prediction for Maximizing Energy Storage Profitability"
-date: "2024-09-05"
----
+# **Electricity Spot Price Prediction for Maximizing Energy Storage Profitability"**
 
 As renewable energy sources such as wind and solar become more prevalent, the energy market faces new challenges—particularly in managing the unpredictability of power supply and the resulting fluctuations in electricity prices. These fluctuations make it difficult for systems like Power-to-X-to-Power (P2X2P) to operate efficiently and profitably. However, by developing a robust spot price prediction model, P2X2P systems can better navigate these fluctuations, storing energy when prices are low and selling it back when prices are high.
 
