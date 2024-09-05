@@ -606,39 +606,44 @@ def plot_year_over_year_coefficients(coeffs, keyword=False, model_name=""):
 
 def plot_metrics(metrics):
     """
-    Plots the metrics for models.
+    Plots separate metrics for models.
 
     Args:
     - metrics (dict): Dictionary containing the metrics for each model
     """
-    # Create a DataFrame from the metrics dictionary
-    metrics_df = pd.DataFrame(metrics)
+    # Convert the metrics dictionary to a DataFrame
+    metrics_df = pd.DataFrame(metrics).T
 
-    # sort the metrics_df by mean_squared_error index
-    metrics_df.sort_values(by='mean_squared_error', axis=1, inplace=True)
+    # Plot each metric separately
+    for metric in metrics_df.columns:
+        plt.figure(figsize=(12, 6))
 
-    # set figure size
-    plt.figure(figsize=(12, 8))
-    
-    # Plot the metrics
-    ax = metrics_df.plot(kind='bar', figsize=(12, 8), width=0.8)
+        # Sort the values for the current metric
+        sorted_df = metrics_df.sort_values(by=metric)
 
-    # Annotate values on top of the bars
-    for p in ax.patches:
-        ax.annotate(format(p.get_height(), '.2f'), 
-                   (p.get_x() + p.get_width() / 2., p.get_height()), 
-                   ha = 'center', va = 'center', 
-                   xytext = (0, 10), 
-                   textcoords = 'offset points',
-                   fontsize=7,
-                   rotation=90)
-    
-    plt.ylabel('Value')
-    plt.xticks(rotation=0)
-    plt.title('Metrics for Each Model')
-    plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.tight_layout()
-    plt.show()
+        # Plot each model for the current metric
+        for index, value in enumerate(sorted_df[metric]):
+            plt.bar(sorted_df.index[index], value, label=sorted_df.index[index])
+
+            # Annotate values on top of the bars
+            plt.text(index, 
+                     value + (value * 0.02),  # Adjusted position
+                     format(value, '.2f'), 
+                     ha='center', va='bottom', 
+                     fontsize=10)
+        
+        plt.ylabel('Value')
+        plt.title(f'{metric.capitalize()} for Each Model')
+
+        # Add legend for models on the right
+        plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+        # Remove x-ticks and labels as they're represented in the legend
+        plt.xticks([])
+
+        plt.tight_layout()
+        plt.show()
+
 
 def plot_predictions(predictions, y_test):
     """
@@ -1064,3 +1069,54 @@ def plot_prediction_accuracy_histogram(accuracy_dict, title, year_on_year=False)
         fig.suptitle(title)
         plt.tight_layout()
         plt.show()
+
+def plot_overall_accuracy_comparison(accuracy_dicts, models, top_k_values):
+    """
+    Plots a multi-bar chart comparing overall accuracies across different models for different top-k values.
+
+    Parameters:
+    - accuracy_dicts: List of accuracy dictionaries for each model
+    - models: List of model names
+    - top_k_values: List of top-k values considered
+    """
+    x = top_k_values
+    bar_width = 0.2
+    space_between_groups = 0.3  # Space between groups of bars
+    positions = [i * (bar_width * len(models) + space_between_groups) for i in range(len(x))]
+
+    # Setup the plot
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+
+    # Plot Max and Min Price Hours Accuracy for each model
+    for i, (key, ax, label) in enumerate(zip(['max', 'min'], axes, ['Max', 'Min'])):
+        for j, model in enumerate(models):
+            # Get the accuracy values for the current model
+            y_values = [accuracy_dicts[model][key][k] for k in x]
+            # Adjust positions for each model bar
+            ax.bar(
+                [pos + j * bar_width for pos in positions], 
+                y_values, 
+                width=bar_width, 
+                label=f'Model: {model}'
+            )
+
+        # Set labels and titles
+        ax.set_xlabel('Number of Top-k Hours')
+        ax.set_ylabel('Accuracy (%)')
+        ax.set_title(f'{label} Price Hours Accuracy')
+        ax.set_xticks([pos + bar_width * (len(models) - 1) / 2 for pos in positions])
+        ax.set_xticklabels(x)
+        ax.set_ylim(0, 100)
+
+        # Add value labels on top of each bar
+        for j, model in enumerate(models):
+            y_values = [accuracy_dicts[model][key][k] for k in x]
+            for k, v in enumerate(y_values):
+                ax.text(positions[k] + j * bar_width, v + 2, f'{v:.1f}%', ha='center', fontsize=10, rotation=90)
+        
+        # Add legend
+        ax.legend()
+
+    fig.suptitle('Overall Prediction Accuracy Comparison Across Models')
+    plt.tight_layout()
+    plt.show()
