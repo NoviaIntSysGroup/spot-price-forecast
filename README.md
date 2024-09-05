@@ -2,7 +2,7 @@
 
 As renewable energy sources such as wind and solar become more prevalent, the energy market faces new challenges—particularly in managing the unpredictability of power supply and the resulting fluctuations in electricity prices. These fluctuations make it difficult for systems like Power-to-X-to-Power (P2X2P) to operate efficiently and profitably. However, by developing a robust spot price prediction model, P2X2P systems can better navigate these fluctuations, storing energy when prices are low and selling it back when prices are high.
 
-This blog post explores the components of a linear regression model designed to predict spot prices, ensuring that P2X2P systems can optimize their operations and maximize profitability. The aim here is to get a reliable baseline model. The code can be found in this [GitHub repository](https://github.com/NoviaIntSysGroup/spot-price-forecast/).
+This blog post explores the components of a linear regression model designed to predict spot prices, ensuring that P2X2P systems can optimize their operations and maximize profitability. The aim here is to get a reliable baseline model.
 
 ## **The Need for Accurate Spot Price Predictions**
 
