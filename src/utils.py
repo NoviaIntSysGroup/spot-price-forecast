@@ -576,7 +576,7 @@ def plot_coefficients(coefficients, col_keyword):
     plt.xticks(rotation=90)
     plt.show()
 
-def plot_year_over_year_coefficients(coeffs, keyword=False, model_name=""):
+def plot_year_over_year_coefficients(coeffs, keyword=False, model_name="", years=None):
     """
     Plots the coefficients for each year for the linear regression model.
 
@@ -584,11 +584,20 @@ def plot_year_over_year_coefficients(coeffs, keyword=False, model_name=""):
     - coeffs (dict): Dictionary containing the coefficients for each year.
     - keyword (str): Keyword to filter the coefficients.
     - model_name (str): Name of the model.
+    - years (list): List of years to plot.
 
     Returns:
     - None
     """
     plt.figure(figsize=(10, 6))
+
+    if years:
+        coeffs = {year: coeffs[year] for year in years}
+
+    if not coeffs:
+        print('No coefficients found for the specified years.')
+        return
+
     for year, coeff in coeffs.items():
         if keyword:
             coeff = coeff[coeff.index.str.contains(keyword)]
@@ -600,8 +609,12 @@ def plot_year_over_year_coefficients(coeffs, keyword=False, model_name=""):
     plt.title(f'{model_name} Coefficients for "{keyword}" Features')
     plt.xticks(rotation=90)  
     # add legend only if its a bar plot
-    if len(coeff) != 1:
-        plt.legend([f'Year {year}' for year in coeffs.keys()], title='Year', bbox_to_anchor=(1.05, 1), loc='upper left')  
+    if len(coeff) != 1 and len(coeffs) > 1:
+        plt.legend([f'Year {year}' for year in coeffs.keys()], title='Year', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # add year in title if only one year is selected
+    if len(coeffs) == 1:
+        plt.title(f'{model_name} Coefficients for "{keyword}" Features in {year}')  
     plt.show()
 
 def plot_metrics(metrics):
@@ -709,15 +722,17 @@ def year_on_year_training(df, model, refit=False, eval_train=False):
         y_train = df.loc[df.index.year == year]['y']
 
         # if the year is not the last year
-        if year < years[-1]:
+        if eval_train:
+            result = train_and_test_model(X_train, X_train, y_train, y_train, model, eval_train=True)
+            predictions = pd.concat([predictions, result['predictions']])
+        elif not eval_train and year < years[-1]:
             # Define the testing data for the next year
             X_test = df.loc[df.index.year == year + 1].drop(columns='y')
             y_test = df.loc[df.index.year == year + 1]['y']
 
-            result = train_and_test_model(X_train, X_test, y_train, y_test, model, eval_train=eval_train, refit=refit)
+            result = train_and_test_model(X_train, X_test, y_train, y_test, model, refit=refit)
 
             predictions = pd.concat([predictions, result['predictions']])
-        
         else:
             if isinstance(model, LinearRegression):
                 model.fit(X_train, y_train)
@@ -1070,7 +1085,7 @@ def plot_prediction_accuracy_histogram(accuracy_dict, title, year_on_year=False)
         plt.tight_layout()
         plt.show()
 
-def plot_overall_accuracy_comparison(accuracy_dicts, models, top_k_values):
+def plot_overall_accuracy_comparison(accuracy_dicts, models, top_k_values, add_to_title):
     """
     Plots a multi-bar chart comparing overall accuracies across different models for different top-k values.
 
@@ -1078,6 +1093,7 @@ def plot_overall_accuracy_comparison(accuracy_dicts, models, top_k_values):
     - accuracy_dicts: List of accuracy dictionaries for each model
     - models: List of model names
     - top_k_values: List of top-k values considered
+    - add_to_title: Additional text to add to the title
     """
     x = top_k_values
     bar_width = 0.2
@@ -1117,6 +1133,6 @@ def plot_overall_accuracy_comparison(accuracy_dicts, models, top_k_values):
         # Add legend
         ax.legend()
 
-    fig.suptitle('Overall Prediction Accuracy Comparison Across Models')
+    fig.suptitle(f'Overall Prediction Accuracy Comparison Across Models {add_to_title}')
     plt.tight_layout()
     plt.show()
