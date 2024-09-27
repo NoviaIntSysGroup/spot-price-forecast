@@ -78,6 +78,6 @@ The first model without external features shows decreasing performance for each 
 
 Accurate spot price forecasts are vital for operating an energy storage optimally, especially today as prices are becoming more volatile due to an increasingly renewable-driven energy market. We developed and evaluated a simple but understandable linear regression model that incorporates time components and external variable to predict hourly fluctuations around a baseline predicted from lagged windowed average of historical values for price and external variables. The combination of these components resulted in a simple model offering a robust baseline for understanding and predicting the dynamics of day-ahead spot prices.
 
-## Author
+## Authors
 
-[Ashish Dahal](https://www.linkedin.com/in/adahal/)
+[Ashish Dahal](https://www.linkedin.com/in/adahal/), Johan Westö
