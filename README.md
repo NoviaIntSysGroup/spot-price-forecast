@@ -1,134 +1,89 @@
-# **Electricity Spot Price Prediction for Maximizing Energy Storage Profitability"**
+---
+title: "Forecasting Day-Ahead Spot Prices for Optimizing Energy Storage Operations"
+date: "2024-09-05"
+coverImage: "p2x2p.jpg"
+---
 
-As renewable energy sources such as wind and solar become more prevalent, the energy market faces new challenges—particularly in managing the unpredictability of power supply and the resulting fluctuations in electricity prices. These fluctuations make it difficult for systems like Power-to-X-to-Power (P2X2P) to operate efficiently and profitably. However, by developing a robust spot price prediction model, P2X2P systems can better navigate these fluctuations, storing energy when prices are low and selling it back when prices are high.
+As renewable energy sources such as wind and solar become more prevalent, the energy market faces new challenges—particularly in managing the unpredictability of power supply and the resulting fluctuations in electricity prices. An energy storage, like a Power-to-X-to-Power (P2X2P) plant, can utilize these fluctuations to make a profit by storing energy when prices are low and selling it back when prices are high. However, the attainable profit is dependent on ones ability to forecast future prices.
 
-This blog post explores the components of a linear regression model designed to predict spot prices, ensuring that P2X2P systems can optimize their operations and maximize profitability. The aim here is to get a reliable baseline model.
+This blog post explores the components of a linear regression model designed to predict day-ahead spot prices, ensuring that an energy storage can optimize its operations and maximize profitability. The aim is to get a simple but reliable baseline model against which future enhancements can be compared. The code can be found in the following [GitHub repository](https://github.com/NoviaIntSysGroup/spot-price-forecast/).
 
-## **The Need for Accurate Spot Price Predictions**
+## The used linear regression model
 
-With the increasing integration of intermittent renewable energy sources, the power grid is subject to significant fluctuations in electricity prices. These price swings are primarily driven by the varying availability of renewable energy, such as solar and wind, which are dependent on environmental conditions. For P2X2P systems, which have the capability to store energy when it is cheap and convert it back when prices rise, accurately predicting future spot prices is crucial for determining the best times to store and release energy.
+Price fluctuations in the spot market are largely driven by variations in supply and demand. Demand tend to vary systematically during the day and between weekdays and weekend, whereas supply is becoming increasingly dependent on the availability of renewable energy, primarily wind in Finland. The linear regression model captures this by predicting systematic and externally driven hourly fluctuations around a baseline computed from lagged averages of previous prices and external variables. The inspiration for the input features has been taken from this [paper](https://www.sciencedirect.com/science/article/pii/S0306261921004529), which discusses the best practices for electricity spot price forecasting. The equation is structured as follows:
 
-The primary challenge is to create a prediction model that can take into account the complex and dynamic factors influencing spot prices, providing system operators with reliable forecasts that inform their energy management strategies.
-
-## **Building the Model: Key Components**
-
-To tackle the challenge of predicting spot prices, we propose a linear regression model that incorporates three main components: time, external factors, and lagged window averages. Each of these components plays a critical role in capturing the nuances of electricity price fluctuations.
-
-## **1\. Time Component: Capturing Seasonality**
-
-Electricity spot prices exhibit distinct patterns depending on the time of day and the day of the week. For example, prices may be higher during peak hours on weekdays due to increased demand, while weekends might show a different pattern altogether.
-
-- **Seasonality**: The time component captures these seasonal patterns by including 48 dummy variables representing the hours of the day across weekdays and weekends.
-
-- **Granular Insights**: By breaking down the data into specific time intervals, this component helps the model understand how prices typically behave at different times, enabling it to account for these variations in its predictions.
-
-This component is crucial for capturing the predictable aspects of price fluctuations, which are driven by regular, cyclical demand patterns. The following charts for the **Time Component coefficients** illustrate how the linear regression model uses hourly coefficients to capture electricity price patterns for both weekdays and weekends. Each line represents a year from 2016 to 2023, showing how the significance of each hour changes over time.
-
-![](images/image-1.png)
-
-For **weekend hours**, the coefficients show notable variation between years, especially for 2021 and 2023, where there are sharp peaks and troughs. These peaks typically occur in the early morning and mid-evening hours, while the dips are more evident in the afternoon. This suggests that electricity prices on weekends are more volatile, with significant fluctuations in demand at different times of the day, particularly in these years.
-
-![](images/image-3.png)
-
-The **weekday hours** coefficients display a more structured pattern, with clear peaks during late morning to early afternoon and dips in the early morning and late evening. Most years show a consistent trend, but 2021 and 2023 stand out with sharper variations, indicating higher price sensitivity during these periods. The 2022 data shows a more stable, less pronounced pattern, which could suggest a period of more predictable demand and supply dynamics during that year.
-
-Overall, the time component captures the cyclical nature of electricity prices by identifying key hours where price fluctuations are most significant. This helps the model to understand daily demand patterns, which is crucial for accurate price predictions.
-
-## **2\. External Component: Accounting for Influential Variables**
-
-Beyond the time of day and week, several external factors significantly influence electricity prices. These factors include:
-
-- **Electricity Production and Demand Forecasts**: These variables reflect the anticipated supply and demand in the energy market, which impact the prices.
-
-- **Renewable Energy Production Forecasts**: Solar and wind power generation forecasts are particularly important, as these sources can cause sharp price changes.
-
-The external component of the model incorporates these variables, allowing it to adjust its predictions based on anticipated changes in supply and demand. By including these external factors, the model can more accurately predict price shifts caused by variations in renewable energy production or unexpected changes in electricity demand.
-
-![](images/image-4.png)
-
-![](images/image-5.png)
-
-![](images/image-6.png)
-
-![](images/image-7.png)
-
-The charts show key trends in how external factors influence electricity prices. For electricity production and consumption forecasts, the coefficients show a clear upward trend, peaking in 2022, suggesting that prices have become more sensitive to production and demand changes over time. This indicates a growing impact of supply-demand dynamics on price predictions.
-
-The solar power generation forecast chart shows fluctuating trends, with significant positive impacts in 2017, minimal impact in 2018, and rising again in 2022, highlighting the varying influence of solar energy depending on the year. Meanwhile, the wind power generation forecast consistently shows negative coefficients, particularly in 2022, suggesting that increased wind forecasts generally lead to lower prices due to greater supply.
-
-## **3\. Lagged Window Average Component: Leveraging Historical Data**
-
-Historical spot prices and external variable values provide a wealth of information that can be used to predict future prices. The lagged window average component serves two primary functions:
-
-- **Baseline Price Calculation**: By considering the average spot price over a specified historical window, this component gives the model a baseline from which to predict future deviations.
-
-- **Trend Analysis**: It also allows the model to detect trends and patterns in how prices evolve over time, providing context for interpreting current data.
-
-![](images/image-8.png)
-
-In the chart, **y\_lag\_avg** represents the average electricity spot price over a window of 24 hours at different lag periods. For example, **y\_lag\_avg\_1** refers to the average price of the previous 24 hours (1-day lag), giving the model insight into the most recent market conditions. As the lag increases, **y\_lag\_avg\_2** represents the average price of the 24 hours that occurred two days ago, and so on. Each lag provides the model with a different historical perspective.
-
-The coefficients for these lagged averages indicate how much weight the model places on past prices for predicting future prices. Early lags like y\_lag\_avg\_1 have higher coefficients, showing a strong influence of recent prices. However, the influence drops sharply by y\_lag\_avg\_2, demonstrating an exponential decay effect where recent data is more impactful, but this impact decreases rapidly. Beyond this, the coefficients gradually rise again by y\_lag\_avg\_7, likely because this lag aligns with the average price from the same day a week before, capturing recurring weekly patterns that are important for accurate predictions.
-
-Incorporating historical data helps the model understand how current conditions compare to past trends, enhancing its ability to predict future prices with greater accuracy.
-
-## **Model Equation: Bringing It All Together**
-
-The linear regression model equation combines the contributions of the time component, external factors, and lagged window averages to predict the spot price. The equation is structured as follows:
-
-![](images/image-10.png)
-
-This equation integrates all relevant factors to produce a comprehensive prediction of future spot prices. By considering the time, external influences, and historical data, the model can provide valuable insights into how prices will likely behave, helping P2X2P systems optimize their operations.
+![](images/image-46-1024x473.png)
 
 > **Avoiding the Dummy Variable Trap**: To accurately capture the influence of time without introducing multicollinearity, the model does not include an intercept. This ensures that all the dummy variables can be included without falling into the “dummy variable trap,” where the sum of the dummy variables could equal the intercept, leading to incorrect estimates.
 
+## **1\. Time Component: Capturing Daily Patterns**
+
+Electricity spot prices exhibit distinct patterns depending on the time of day and the day of the week. For example, prices may be higher during peak hours on weekdays due to increased demand, while weekends might show a different pattern altogether.
+
+- **Daily Pattern**: The time component captures these daily patterns by including 48 dummy variables representing the hours of the day across weekdays and weekends.
+
+It’s essential to represent the time component in a way that the model can understand. One way to do it is using [one-hot encoding](https://www.researchgate.net/profile/Jamell-Samuels/publication/377159812_One-Hot_Encoding_and_Two-Hot_Encoding_An_Introduction/links/6597e5c90bb2c7472b35fbb5/One-Hot-Encoding-and-Two-Hot-Encoding-An-Introduction.pdf). Our model involves creating two sets of 24 features—one for weekdays and one for weekends—where each feature represents an hour of the day. For example, if the time is 10 AM on a weekend, the feature corresponding to the 10th hour in the weekend set is set to 1, while the other 23 features in the weekend set and all 24 features in the weekday set are set to 0. This distinct encoding allows models to differentiate between the same hour occurring on a weekday versus a weekend, capturing temporal patterns more accurately.
+
+This component is crucial for capturing systematic price fluctuations, driven by regular cyclical demand patterns. The graphs below show the found **Time Component coefficients** for the year 2023. The daily and hourly patterns highlight that the price of electricity tends to be more expensive during the day, with two price peaks (one in the morning and one in the evening), and that the price tends to be lower during weekends than weekdays.
+
+![](images/image-33.png)
+
+![](images/image-34.png)
+
+## **2\. External Component: Accounting for Influential Variables**
+
+Beyond the time of day and week, several external factors can influence electricity prices. The factors include in the model are:
+
+- **Electricity Production and Demand Forecasts**: These variables reflect the anticipated supply and demand in the energy market.
+
+- **Renewable Energy Production Forecasts**: Solar and wind power generation forecasts.
+
+## **3\. Lagged Window Average Component: Leveraging Historical Data**
+
+Historical values for spot prices and external variable values provide information that can be used to predict the baseline around which daily fluctuations occur as well as ongoing trends. This historical information is included in the model through lagged windowed average features. The found coefficients for these indicate which historical information that the model consider relevant. For example, the graph below highlights how much weight the model places on past prices for predicting future prices, and it indicates that the average price during the previous day is seen as the most important.
+
+![](images/image-35.png)
+
 ## **Model Performance: Constructing a Reliable Metric**
 
-In a Power-to-X-to-Power (P2X2P) system, the goal is not just to minimize prediction errors but to strategically identify the hours when electricity prices are at their highest or lowest. This is crucial because these systems have limited operating hours—such as running for only 3 hours a day—and need to maximize efficiency by choosing the most cost-effective time slots. Traditional metrics like Mean Squared Error (MSE) or Mean Absolute Error (MAE) fall short for this purpose because they focus on overall prediction accuracy rather than pinpointing specific high or low-price hours. This is where a custom metric becomes essential: it evaluates the model’s ability to predict the top-k maximum and minimum price hours, providing actionable insights for P2X2P operations.
+For an energy storage, the goal is not just to minimize prediction errors but to strategically identify the hours when electricity prices are at their highest or lowest. This is crucial because the system may have limited charging and discharging hours due to the limited storage. Traditional metrics like Mean Squared Error (MSE) or Mean Absolute Error (MAE) fall short for this purpose because they focus on overall prediction accuracy rather than pinpointing specific high or low-price hours. Custom metrics are therefore essential, and one possibility is to evaluate the model’s ability to predict the top-k maximum and minimum priced hours.
 
-The charts below compare the accuracy of various linear regression (LR) models as we gradually add more components such as time features, external market data, historical price lags, and their combinations to improve predictions for peak price hours.
+We thus define model accuracy as the proportion of days where the top-k highest (or lowest) predicted hours match the actual top-k highest (or lowest) hours, formally written as:
 
-## **Starting with the Time Component**
+![](images/image-30.png)
 
-![](images/image-11.png)
+The charts below compare the accuracy of various linear regression (LR) models as we gradually add external variables and their lagged averages. All models are trained on data from one year. We show results on both test and training sets, where the test set always consists of data from the subsequent year that was not used for training.
 
-Using only the **Time Component**, the model shows an increasing trend in accuracy for predicting **maximum price hours** from 17.8% in 2017 to 29.6% in 2023, except for 2022. This suggests that time-based patterns can somewhat predict peak prices.
+## **Time Component + Price Lags**
 
-For **minimum price hours**, there is a decreasing trend from 32.3% in 2017 to 12.9% in 2023, indicating that time features alone are less reliable for predicting low-price periods. The mixed results for 2022 suggest that time-based features need additional components to handle irregular patterns effectively.
+![](images/image-39-1024x436.png)
 
-## **Including Price Lags**
-
-![](images/image-12.png)
-
-Adding **Price Lags** to the model shows no improvement compared to using just the **Time Component**. This indicates that price lags alone do not provide added value over time-based features for predicting peak or low price periods. However, it is interesting to see that the adding price lags significantly lowers the mean squared error, indicating it is helpful in predicting the spot prices themselves (vs capturing the trend where min and max hours occurs) as seen in figure below:
-
-![](images/image-17-1024x515.png)
+![](images/image-40-1024x436.png)
 
 ## **Enhancing with External Features**
 
-![](images/image-13.png)
+![](images/image-41-1024x436.png)
 
-![](images/image-14.png)
-
-Adding **External Features** like production and demand forecasts slightly improves the model's accuracy for **maximum price hours**, maintaining a similar trend to previous models but with slight gains. For **minimum price hours**, the accuracy sees more significant improvement which suggests external features help better capture low-price periods, though the benefit diminishes for predicting more hours.
+![](images/image-42-1024x436.png)
 
 ## **Including External Lags**
 
-![](images/image-15.png)
+![](images/image-43-1024x436.png)
 
-Including **External Lags** generally boosts the model's overall accuracy for predicting both **maximum** and **minimum price hours**, despite occasional drops in specific years. For maximum price hours, the model shows stronger predictive power, indicating that external lagged data enhances the ability to capture peak price trends.
+![](images/image-44-1024x436.png)
 
-For minimum price hours, while some years show variability in accuracy, the overall trend indicates an improvement. This suggests that, on balance, adding external lags helps the model better identify key price periods, providing more reliable predictions compared to models without these additional historical context features.
+The first model without external features shows decreasing performance for each passing year in predicting the hours with lowest prices. This likely reflect the growing impact of wind power on available supply, as the performance increases when external variables are included (hourly wind power production forecasts being one external variable). The impact of the lagged external variables is less clear to pinpoint, but including these seems to result in a performance boost for both training and test sets, most clearly seen in the average accuracies over all years below. The benefit of including external variables is also systematically seen on the test sets, indicating that the models learns knowledge that is transferable from one year to the next.
 
 ## **Comparing the Models**
 
-![](images/image-16.png)
+![](images/image-37-1024x436.png)
 
-The summary chart reinforces these findings by showcasing a clear trend: as more components are layered into the model, the accuracy in predicting top-k price hours consistently improves. Notably, adding **External Lags**—which consider past values of external factors—provides a significant lift across all metrics. This approach ensures that the model is not only aware of recent trends but also considers how external influences can shape future price movements.
+![](images/image-38-1024x436.png)
 
 ## **Conclusion: Harnessing Spot Price Forecasting for Profit**
 
-Accurately predicting spot prices is vital for the efficient operation of P2X2P systems in an increasingly renewable-driven energy market. By leveraging a linear regression model that incorporates time-based seasonality, external influencing factors, and historical price data, operators can make informed decisions about when to store and release energy, ultimately maximizing profitability. The combination of these components within the model offers a robust baseline for understanding and predicting the dynamics of electricity prices.
+Accurate spot price forecasts are vital for operating an energy storage optimally, especially today as prices are becoming more volatile due to an increasingly renewable-driven energy market. We developed and evaluated a simple but understandable linear regression model that incorporates time components and external variable to predict hourly fluctuations around a baseline predicted from lagged windowed average of historical values for price and external variables. The combination of these components resulted in a simple model offering a robust baseline for understanding and predicting the dynamics of day-ahead spot prices.
 
-## **Author**
+## Author
+
 [Ashish Dahal](https://www.linkedin.com/in/adahal/)
