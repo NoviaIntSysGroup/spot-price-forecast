@@ -1,9 +1,3 @@
----
-title: "Forecasting Day-Ahead Spot Prices for Optimizing Energy Storage Operations"
-date: "2024-09-05"
-coverImage: "p2x2p.jpg"
----
-
 As renewable energy sources such as wind and solar become more prevalent, the energy market faces new challenges—particularly in managing the unpredictability of power supply and the resulting fluctuations in electricity prices. An energy storage, like a Power-to-X-to-Power (P2X2P) plant, can utilize these fluctuations to make a profit by storing energy when prices are low and selling it back when prices are high. However, the attainable profit is dependent on ones ability to forecast future prices.
 
 This blog post explores the components of a linear regression model designed to predict day-ahead spot prices, ensuring that an energy storage can optimize its operations and maximize profitability. The aim is to get a simple but reliable baseline model against which future enhancements can be compared. The code can be found in the following [GitHub repository](https://github.com/NoviaIntSysGroup/spot-price-forecast/).
