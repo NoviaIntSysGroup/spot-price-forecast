@@ -78,6 +78,26 @@ The first model without external features shows decreasing performance for each 
 
 Accurate spot price forecasts are vital for operating an energy storage optimally, especially today as prices are becoming more volatile due to an increasingly renewable-driven energy market. We developed and evaluated a simple but understandable linear regression model that incorporates time components and external variable to predict hourly fluctuations around a baseline predicted from lagged windowed average of historical values for price and external variables. The combination of these components resulted in a simple model offering a robust baseline for understanding and predicting the dynamics of day-ahead spot prices.
 
+## Installation
+
+Create a new conda environment with python and install using pip in editable mode.
+```bash
+$ conda create -n spot-price-forecast python=3.11
+$ conda activate spot-price-forecast
+$ git clone git@github.com:NoviaIntSysGroup/spot-price-forecast.git
+$ cd spot-price-forecast
+$ pip install -e .
+```
+
+You need to add .env file with you API key for Fingrid's API to download day-ahead forecasts for electricity production and consumption in Finland as well as day-ahead forecasts for wind and solar production.
+```bash
+$ echo "FINGRID_API_KEY=YOUR_API_KEY" > .env
+```
+
+## Usage
+
+
+
 ## Authors
 
 [Ashish Dahal](https://www.linkedin.com/in/adahal/), Johan Westö
