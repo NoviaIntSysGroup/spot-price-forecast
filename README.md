@@ -89,7 +89,7 @@ $ cd spot-price-forecast
 $ pip install -e .
 ```
 
-You need to add .env file with you API key for Fingrid's API to download day-ahead forecasts for electricity production and consumption in Finland as well as day-ahead forecasts for wind and solar production.
+You need to add .env file with you API key for Fingrid's API to download additional day-ahead forecasts for electricity production and consumption in Finland as well as day-ahead forecasts for wind and solar production. The repositorie's data folder includes hourly values from 2016 to 2023.
 ```bash
 $ echo "FINGRID_API_KEY=YOUR_API_KEY" > .env
 ```

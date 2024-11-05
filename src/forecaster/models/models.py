@@ -1,58 +1,55 @@
 import numpy as np
+import pandas as pd
 
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
-    
-class WindowAverageModel:
-    """
-    A model that predicts the average of the last 'window_size' observations for all future values.
-    """
-    def __init__(self, window_size=24):
-        self.window_size = window_size
-        self.window_average = None
-    
+from forecaster.utils import create_daily_lag_features, extract_time_features
+
+
+class LinearModel:
+
+    def __init__(self, 
+                 daily_price_lags: list, 
+                 time_features: bool=False,
+                 efternal_features: list=[],
+                 daily_external_lags: list=[],
+                 fit_coeffs: bool=True,
+                 ):
+        """
+        Initializes the ForecastingModel with the specified lags for daily prices and external features.
+        """
+        self.daily_price_lags = daily_price_lags
+        self.time_features = time_features
+        self.external_features = efternal_features
+        self.daily_external_lags = daily_external_lags
+        self.nFeatures = len(daily_price_lags) + time_features*48 + len(efternal_features) * len(daily_external_lags)
+        self.coeffs = np.full(self.nFeatures, np.nan)
+        self.fit_coeffs = fit_coeffs
+        self.model = LinearRegression(fit_intercept=False)
+
+    def preprocess_data(self, df):
+        
+        df_with_features = df.copy()
+
+        if self.daily_price_lags:
+            df_with_features = create_daily_lag_features(df_with_features, 'y', self.daily_price_lags, average=True)
+
+        if self.time_features:
+            df_with_features = extract_time_features(df_with_features)
+
+        df_with_features.dropna(how="any", inplace=True)
+
+        return df_with_features
+
     def fit(self, X, y):
-        if hasattr(y, 'iloc'):  # Pandas series handling
-            self.window_average = y.iloc[-self.window_size:].mean()
-        else:  # Handling numpy arrays or Python lists
-            self.window_average = np.mean(y[-self.window_size:])
-    
+        # Fit coefficients useing least squares
+        if self.fit_coeffs:
+            self.model.fit(X, y)
+            self.coeffs = self.model.coef_
+        # Else just coeffs that sum to unity, only makes sense for models that only used lagged price feautures
+        else:   
+            self.coeffs = np.ones(self.nFeatures) / self.nFeatures
+
     def predict(self, X):
-        return np.full(len(X), self.window_average)
-    
-class ExponentialAverageModel:
-    """
-    A model that predicts the exponential average for all future values.
-    """
-    def __init__(self, alpha=0.1):
-        """
-        Initializes the ExponentialAverage with a specific alpha value.
-        
-        Args:
-            alpha (float): The smoothing factor for the exponential average.
-        """
-        self.alpha = alpha
-        self.exponential_average = None
-    
-    def fit(self, X, y):
-        """
-        Fits the model using the training data to compute the exponential average.
-        
-        Args:
-            X: Features data (not used in the computation as the model is based only on y)
-            y: Target data from which the exponential average is computed.
-        """
-        self.exponential_average = y.ewm(alpha=self.alpha, adjust=False).mean().iloc[-1]
-    
-    def predict(self, X):
-        """
-        Predicts using the computed exponential average for each entry in X.
-        
-        Args:
-            X: Data for which predictions are to be made (not used in predictions as the output is always the average).
-        
-        Returns:
-            numpy.ndarray: An array filled with the computed average, with the same length as X.
-        """
-        return np.full(len(X), self.exponential_average)
+        y_hat = np.dot(X, self.coeffs)
+        return pd.Series(y_hat, index=X.index, name="y_hat")

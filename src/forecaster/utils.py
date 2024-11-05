@@ -7,7 +7,86 @@ from dash import dcc, html, Input, Output
 import plotly.graph_objs as go
 
 
+def create_daily_lag_features(df, column_name="y", lags=[1], average=False):
+    """
+    Creates lagged features for the given column at a daily level.
+
+    Args:
+    - df (pd.DataFrame): Timeseries DataFrame containing the features.
+    - column_name (str): Name of the column for which to create lagged features.
+    - lags (list): List of lags to create.
+    - average (bool): Whether to create daily average lagged features.
+
+    Returns:
+    - pd.DataFrame: Timeseries DataFrame with the lagged features added.
+    """
     
+    # Precompute the hour index
+    hour_idx = df.index.hour
+
+    # Iterate over the lags
+    for lag in lags:
+        # Create the lagged daily data in a vectorized way
+        lagged_data = df[column_name].shift(24 * lag)
+        
+        if average:
+            # Calculate the average across the 24 hours in a vectorized way
+            daily_avg_lag = lagged_data.groupby(lagged_data.index.date).transform('mean')
+            df[f'{column_name}_lag_avg_{lag}'] = daily_avg_lag
+        else:
+            # Initialize a DataFrame to hold lagged hourly data
+            lagged_hourly_df = pd.DataFrame(index=df.index)
+
+            # Vectorized assignment of lagged data by hour
+            for hour in range(24):
+                # Create a mask for the specific hour
+                mask = (hour_idx == hour)
+                # Extract lagged values for the hour
+                lagged_hourly_data = lagged_data[mask]
+                # Group by date to align with the original's pivot logic
+                lagged_hourly_column = lagged_hourly_data.groupby(lagged_hourly_data.index.date).first()
+
+                # Map the values back to the DataFrame, filling NaNs where no lagged data is available
+                lagged_hourly_df[f'{column_name}_lag_{lag}_h{hour}'] = df.index.map(
+                    lambda x: lagged_hourly_column.loc[x.date()] if x.date() in lagged_hourly_column.index else np.nan
+                )
+
+            # Assign the lagged hourly columns back to the original DataFrame
+            df = pd.concat([df, lagged_hourly_df], axis=1)
+    
+    return df
+
+def extract_time_features(df):
+    """
+    Extracts time features (dummy variables) for weekend and weekdays from the datetime index of the dataframe.
+
+    Args:
+    - df (pd.DataFrame): Timeseries DataFrame containing the target variable.
+
+    Returns:
+    - pd.DataFrame: Timeseries DataFrame with the time features added.
+    """
+    # Check if the index of the dataframe is a datetime index
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError("The index of the dataframe must be a DatetimeIndex.")
+
+    # Initialize all feature columns to zero
+    for hour in range(24):
+        df[f'weekday_hour_{hour}'] = 0
+        df[f'weekend_hour_{hour}'] = 0
+    
+    # Set values for weekday and weekend hours
+    for hour in range(24):
+        # Weekday columns (Monday=0, ..., Friday=4)
+        df.loc[(df.index.weekday < 5) & (df.index.hour == hour), f'weekday_hour_{hour}'] = 1
+        
+        # Weekend columns (Saturday=5, Sunday=6)
+        df.loc[(df.index.weekday >= 5) & (df.index.hour == hour), f'weekend_hour_{hour}'] = 1
+    
+    return df
+
+
+############################
 
 def plot_spot_price_predictions(
     y_true, 
@@ -73,34 +152,7 @@ def plot_spot_price_predictions(
     plt.tight_layout()
     plt.show()
 
-def extract_time_features(df):
-    """
-    Extracts time features (dummy variables) for weekend and weekdays from the datetime index of the dataframe.
 
-    Args:
-    - df (pd.DataFrame): Timeseries DataFrame containing the target variable.
-
-    Returns:
-    - pd.DataFrame: Timeseries DataFrame with the time features added.
-    """
-    # Check if the index of the dataframe is a datetime index
-    if not isinstance(df.index, pd.DatetimeIndex):
-        raise ValueError("The index of the dataframe must be a DatetimeIndex.")
-
-    # Initialize all feature columns to zero
-    for hour in range(24):
-        df[f'weekday_hour_{hour}'] = 0
-        df[f'weekend_hour_{hour}'] = 0
-    
-    # Set values for weekday and weekend hours
-    for hour in range(24):
-        # Weekday columns (Monday=0, ..., Friday=4)
-        df.loc[(df.index.weekday < 5) & (df.index.hour == hour), f'weekday_hour_{hour}'] = 1
-        
-        # Weekend columns (Saturday=5, Sunday=6)
-        df.loc[(df.index.weekday >= 5) & (df.index.hour == hour), f'weekend_hour_{hour}'] = 1
-    
-    return df
 
 
 def fill_missing_values(df, missing_mapping=None):
@@ -164,59 +216,7 @@ def add_external_features(df, features_to_add):
 
     return df_copy
 
-def create_daily_lag_features(df, column_name="y", lags=[1], average=False):
-    """
-    Creates lagged features for the given column at a daily level.
 
-    Args:
-    - df (pd.DataFrame): Timeseries DataFrame containing the features.
-    - column_name (str): Name of the column for which to create lagged features.
-    - lags (list): List of lags to create.
-    - average (bool): Whether to create daily average lagged features.
-
-    Returns:
-    - pd.DataFrame: Timeseries DataFrame with the lagged features added.
-    """
-    # Create a copy of the DataFrame
-    df_copy = df.copy()
-
-    # Ensure the DataFrame index is a DatetimeIndex
-    df_copy.index = pd.to_datetime(df_copy.index)
-    
-    # Precompute the hour index
-    hour_idx = df_copy.index.hour
-
-    # Iterate over the lags
-    for lag in lags:
-        # Create the lagged daily data in a vectorized way
-        lagged_data = df_copy[column_name].shift(24 * lag)
-        
-        if average:
-            # Calculate the average across the 24 hours in a vectorized way
-            daily_avg_lag = lagged_data.groupby(lagged_data.index.date).transform('mean')
-            df_copy[f'{column_name}_lag_avg_{lag}'] = daily_avg_lag
-        else:
-            # Initialize a DataFrame to hold lagged hourly data
-            lagged_hourly_df = pd.DataFrame(index=df_copy.index)
-
-            # Vectorized assignment of lagged data by hour
-            for hour in range(24):
-                # Create a mask for the specific hour
-                mask = (hour_idx == hour)
-                # Extract lagged values for the hour
-                lagged_hourly_data = lagged_data[mask]
-                # Group by date to align with the original's pivot logic
-                lagged_hourly_column = lagged_hourly_data.groupby(lagged_hourly_data.index.date).first()
-
-                # Map the values back to the DataFrame, filling NaNs where no lagged data is available
-                lagged_hourly_df[f'{column_name}_lag_{lag}_h{hour}'] = df_copy.index.map(
-                    lambda x: lagged_hourly_column.loc[x.date()] if x.date() in lagged_hourly_column.index else np.nan
-                )
-
-            # Assign the lagged hourly columns back to the original DataFrame
-            df_copy = pd.concat([df_copy, lagged_hourly_df], axis=1)
-    
-    return df_copy
 
 def ts_split_train_test(df, test_size=0.2):
     """
@@ -260,72 +260,7 @@ def ts_split_train_test_by_date(df, train_start, train_end, test_start, test_end
 
     return X_train, X_test, y_train, y_test
 
-def ts_prediction(X_train, y_train, X_test, y_test, model, horizon=24, refit=False, eval_train=False):
-    """
-    Predicts the target variable for the testing data using an autoregressive approach,
-    retraining the model after each window using the true values from the previous window.
 
-    Args:
-    - X_train (pd.DataFrame): Training features.
-    - y_train (pd.Series): Training target.
-    - X_test (pd.DataFrame): Testing features.
-    - y_test (pd.Series): Testing target.
-    - model: Model to be trained and tested.
-    - horizon (int): Number of hours to predict ahead.
-    - refit (bool): Whether to refit the model after each window.
-    - eval_train (bool): Whether to evaluate the model on the training set.
-
-    Returns:
-    - pd.Series: Contains the predictions from the model for the test set.
-    - np.array | None: Coefficients for the linear regression model.
-    """
-    # Initialize prediction vector that will hold all predictions
-    predictions = np.empty(len(X_test))
-
-    # Prepare extended training set
-    X_train_extended = X_train.copy()
-    y_train_extended = y_train.copy()
-
-    # Initial training of the model
-    model.fit(X_train_extended, y_train_extended)
-
-    # check if coefficients are present in case of linear regression model
-    coeff = None
-    if isinstance(model, LinearRegression):
-        coeff = model.coef_
-    print("Initial training completed with training size:", len(X_train_extended), "Indexes:", X_train_extended.index[0], "-", X_train_extended.index[-1])
-
-    # Evaluate the model on the training set if eval_train is True
-    if eval_train:
-        return pd.Series(model.predict(X_train), index=X_train.index), coeff
-
-    # Process each window
-    num_windows = (len(X_test) + horizon - 1) // horizon
-
-    for i in range(num_windows):
-        start = i * horizon  
-        end = min(start + horizon, len(X_test)) # Ensure that the last window is not larger than the test set
-        
-        # Print the range of indexes for current testing window
-        print(f"Testing window {i}: Indexes {X_test.index[start]} - {X_test.index[end-1]}")
-
-        # Prepare features for the current window
-        X_test_current = X_test.iloc[start:end].copy()
-
-        # Predict the current window
-        current_predictions = model.predict(X_test_current)
-        predictions[start:end] = current_predictions
-
-        # Retrain the model with extended training set if refit is True
-        if refit:
-            # Append true outcomes to the training set (no need to copy data until re-training is needed)
-            X_train_extended = pd.concat([X_train_extended, X_test_current])
-            y_train_extended = pd.concat([y_train_extended, y_test.iloc[start:end]])
-            model.fit(X_train_extended, y_train_extended)
-            print(f"Retrained model with updated training size: {len(X_train_extended)}", "Indexes:", X_train_extended.index[0], "-", X_train_extended.index[-1])
-            
-
-    return pd.Series(predictions, index=X_test.index), coeff
 
 
 
