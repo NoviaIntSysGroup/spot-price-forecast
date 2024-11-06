@@ -3,7 +3,7 @@ import pandas as pd
 
 from sklearn.linear_model import LinearRegression
 
-from forecaster.utils import create_daily_lag_features, extract_time_features
+from forecaster.models import utils
 
 
 class LinearModel:
@@ -11,7 +11,7 @@ class LinearModel:
     def __init__(self, 
                  daily_price_lags: list, 
                  time_features: bool=False,
-                 efternal_features: list=[],
+                 efternal_features: dict={},
                  daily_external_lags: list=[],
                  fit_coeffs: bool=True,
                  ):
@@ -31,12 +31,31 @@ class LinearModel:
         
         df_with_features = df.copy()
 
+        if self.external_features:
+            df_with_features = utils.add_external_features(df_with_features, self.external_features)
+
         if self.daily_price_lags:
-            df_with_features = create_daily_lag_features(df_with_features, 'y', self.daily_price_lags, average=True)
+            df_with_features = utils.create_daily_lag_features(
+                df_with_features, 
+                'y', 
+                self.daily_price_lags, 
+                average=True
+                )
+
+        if self.daily_external_lags:
+            for feature_key in self.external_features.keys():
+                feature_name = self.external_features[feature_key]
+                df_with_features = utils.create_daily_lag_features(
+                    df_with_features, 
+                    feature_name, 
+                    self.daily_external_lags, 
+                    average=True
+                    )
 
         if self.time_features:
-            df_with_features = extract_time_features(df_with_features)
+            df_with_features = utils.extract_time_features(df_with_features)
 
+        # remove rows with NaN values that might have been created by lagging
         df_with_features.dropna(how="any", inplace=True)
 
         return df_with_features

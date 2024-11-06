@@ -1,8 +1,13 @@
 import os
 import time
 import requests
+import numpy as np
+import pandas as pd
 
+from datetime import datetime
 from dotenv import load_dotenv
+
+from forecaster.utils import get_project_root
 
 # Forecasts and the IDs in Fingrid's API
 EXTERNAL_FEATURES = {
@@ -12,6 +17,35 @@ EXTERNAL_FEATURES = {
     '242': 'production'
 }
 
+
+def getFeatureDictFromKeys(keys):
+    # Identify any keys that are not in the original dictionary
+    missing_keys = [key for key in keys if key not in EXTERNAL_FEATURES]
+    
+    # Assert that all requested keys are present, with a detailed message if not
+    assert not missing_keys, (
+        f"The following IDs are not available as features: {missing_keys}. "
+        f"Available feature IDs are: {list(EXTERNAL_FEATURES.keys())}"
+    )
+    return {key: EXTERNAL_FEATURES[key] for key in keys if key in EXTERNAL_FEATURES}
+
+def load_fingrid_data(dataset_id):
+
+    project_root_path = get_project_root()
+    data = pd.read_csv(f'{project_root_path}/data/{dataset_id}.csv')
+
+    # Convert the first and last hour to datetime
+    dt_start = datetime.fromisoformat(data.iloc[0, 0])
+    dt_end = datetime.fromisoformat(data.iloc[-1, 0])
+    # Get the hourly timestamps for the interval
+    n_hours = (dt_end.timestamp() - dt_start.timestamp()) / 3600 + 1
+    timestamps = dt_start.timestamp() + np.arange(n_hours) * 3600
+    # Convert the timestamps to datetime index for the dataframe
+    data.index = pd.to_datetime(timestamps, unit='s').tz_localize('UTC').tz_convert('Europe/Helsinki')
+    # Drop the original startTIme column
+    data.drop(columns='startTime', inplace=True)
+
+    return data
 
 def fetch_dataset_shorts():
     """

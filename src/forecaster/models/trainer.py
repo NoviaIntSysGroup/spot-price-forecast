@@ -1,7 +1,4 @@
-import numpy as np
 import pandas as pd
-
-from sklearn.linear_model import LinearRegression
 
 from forecaster.models.evaluate import calculate_metrics
 
@@ -26,20 +23,23 @@ def year_on_year_training(df, model):
     years = df.index.year.unique()
 
     # fit year on year, train for one year predict for next etc for years 2016-2023
-    for year in years[:-1]:
+    for year in years:
 
         print(f'Training model for year {year}')
         # Define the training data for the current year
         X_train = df.loc[df.index.year == year].drop(columns='y')
         y_train = df.loc[df.index.year == year]['y']
-        X_test = df.loc[df.index.year == year + 1].drop(columns='y')
 
+        # Fit the model and make predictions for the training data
         model.fit(X_train, y_train)
         y_hat_train = model.predict(X_train)
-        y_hat_test = model.predict(X_test)
-
-        predictions_test.append(y_hat_test)
         predictions_train.append(y_hat_train)
+
+        # Make predictions for the test data if possible
+        if year < years[-1]:
+            X_test = df.loc[df.index.year == year + 1].drop(columns='y')
+            y_hat_test = model.predict(X_test)
+            predictions_test.append(y_hat_test)
 
         coeffs[year] = pd.Series(model.coeffs, index=X_train.columns)
 
