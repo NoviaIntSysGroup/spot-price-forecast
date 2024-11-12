@@ -7,7 +7,7 @@ This blog post explores the components of a linear regression model designed to 
 
 Price fluctuations in the spot market are largely driven by variations in supply and demand. Demand tend to vary systematically during the day and between weekdays and weekend, whereas supply is becoming increasingly dependent on the availability of renewable energy, primarily wind in Finland. The linear regression model captures this by predicting systematic and externally driven hourly fluctuations around a baseline computed from lagged averages of previous prices and external variables. The inspiration for the input features has been taken from this [paper](https://www.sciencedirect.com/science/article/pii/S0306261921004529), which discusses the best practices for electricity spot price forecasting. The equation is structured as follows:
 
-![](images\model_equation.png)
+![](images/model_equation.png)
 
 > **Avoiding the Dummy Variable Trap**: To accurately capture the influence of time without introducing multicollinearity, the model does not include an intercept. This ensures that all the dummy variables can be included without falling into the “dummy variable trap,” where the sum of the dummy variables could equal the intercept, leading to incorrect estimates.
 
@@ -49,28 +49,28 @@ The charts below compare the accuracy of various linear regression (LR) models a
 
 ## **Time Component + Price Lags**
 
-![](images\accuracy_of_top_k_hour_predictions__time___price_lags__train_.png)
-![](images\accuracy_of_top_k_hour_predictions__time___price_lags__test_.png)
+![](images/accuracy_of_top_k_hour_predictions__time___price_lags__train_.png)
+![](images/accuracy_of_top_k_hour_predictions__time___price_lags__test_.png)
 
 
 ## **Enhancing with External Features**
 
-![](images\accuracy_of_top_k_hour_predictions__time___price_lags___external_features__train_.png)
-![](images\accuracy_of_top_k_hour_predictions__time___price_lags___external_features__test_.png)
+![](images/accuracy_of_top_k_hour_predictions__time___price_lags___external_features__train_.png)
+![](images/accuracy_of_top_k_hour_predictions__time___price_lags___external_features__test_.png)
 
 ## **Including External Lags**
 
-![](images\accuracy_of_top_k_hour_predictions__time___price_lags___external_features___external_lags__train_.png)
+![](images/accuracy_of_top_k_hour_predictions__time___price_lags___external_features___external_lags__train_.png)
 
-![](images\accuracy_of_top_k_hour_predictions__time___price_lags___external_features___external_lags__test_.png)
+![](images/accuracy_of_top_k_hour_predictions__time___price_lags___external_features___external_lags__test_.png)
 
 The first model without external features shows decreasing performance for each passing year in predicting the hours with the lowest prices. This likely reflects the growing impact of wind power on available supply, as the performance increases when external variables are included (hourly wind power production forecasts being one external variable).ss The effect of the lagged external variables is less clear to pinpoint, but including these seems to result in a performance boost for both training and test sets, most clearly seen in the average accuracies over all years below. The benefit of including external variables is also systematically seen in the test sets, indicating that the models learn knowledge that is transferable from one year to the next.
 
 ## **Comparing the Models**
 
-![](images\overall_prediction_accuracy_comparison_across_models__train_.png)
+![](images/overall_prediction_accuracy_comparison_across_models__train_.png)
 
-![](images\overall_prediction_accuracy_comparison_across_models__test_.png)
+![](images/overall_prediction_accuracy_comparison_across_models__test_.png)
 
 ## **Conclusion: Harnessing Spot Price Forecasting for Profit**
 
@@ -96,9 +96,9 @@ $ echo "FINGRID_API_KEY=YOUR_API_KEY" > .env
 
 * The notebook [fetch_data_from_fingrid](notebooks/fetch_data_from_fingrid.ipynb) shows how to download data from Fingrid's API and save it to the data folder. 
 
-* The notebook [electricity_spot_price_prediction](notebooks\electricity_spot_price_prediction.ipynb) shows how to train the model and save predictions.
+* The notebook [electricity_spot_price_prediction](notebooks/electricity_spot_price_prediction.ipynb) shows how to train the model and save predictions.
 
-* The notebook [visualizations](notebooks\visualizations.ipynb) shows how to train and evaluate the linear regression model with external lags.
+* The notebook [visualizations](notebooks/visualizations.ipynb) shows how to visualize the model's coefficients and evaluations.
 
 
 ## Authors
