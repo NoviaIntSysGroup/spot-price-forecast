@@ -11,7 +11,7 @@ class LinearModel:
     def __init__(self, 
                  daily_price_lags: list, 
                  time_features: bool=False,
-                 efternal_features: dict={},
+                 external_features: dict={},
                  daily_external_lags: list=[],
                  fit_coeffs: bool=True,
                  ):
@@ -20,9 +20,9 @@ class LinearModel:
         """
         self.daily_price_lags = daily_price_lags
         self.time_features = time_features
-        self.external_features = efternal_features
+        self.external_features = external_features
         self.daily_external_lags = daily_external_lags
-        self.nFeatures = len(daily_price_lags) + time_features*48 + len(efternal_features) * len(daily_external_lags)
+        self.nFeatures = len(daily_price_lags) + time_features*48 + len(external_features) * len(daily_external_lags)
         self.coeffs = np.full(self.nFeatures, np.nan)
         self.fit_coeffs = fit_coeffs
         self.model = LinearRegression(fit_intercept=False)
